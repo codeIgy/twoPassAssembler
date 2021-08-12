@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClInclude Include="assembler.h" />
     <ClInclude Include="assemblerException.h" />
+    <ClInclude Include="lex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
