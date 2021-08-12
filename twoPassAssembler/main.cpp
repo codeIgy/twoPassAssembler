@@ -33,10 +33,12 @@ int main(int argc, char** argv) {
 	outputFile.open(outputFileName, ios::out);
 	if (!outputFile) {
 		cout << "Error: Unable to open output file" << endl;
+		inputFile.close();
 		return 0;
 	}
 
-
+	inputFile.close();
+	outputFile.close();
 	return 0;
 
 }
