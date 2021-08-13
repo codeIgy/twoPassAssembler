@@ -8,7 +8,7 @@ class RegExpr
 {
 public:
 	//directives
-	static regex directiveGlobal("\\.global\\s+\\w(\\w|\\d)*(\\s+,\\s+\\w(\\w|\\d))*");
+	static regex directiveGlobal;
 	static regex directiveExtern;
 	static regex directiveSection;
 	static regex directiveWord;
@@ -17,8 +17,8 @@ public:
 	static regex directiveEnd;
 
 	//label regex
+	static regex label;
 
-	static regex
 };
 
 #endif
