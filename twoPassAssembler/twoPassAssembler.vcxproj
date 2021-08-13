@@ -126,11 +126,14 @@
     <ClCompile Include="assembler.cpp" />
     <ClCompile Include="lex.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="symbolTable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assembler.h" />
     <ClInclude Include="assemblerException.h" />
     <ClInclude Include="lex.h" />
+    <ClInclude Include="symbolTable.h" />
+    <ClInclude Include="TableEntry.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

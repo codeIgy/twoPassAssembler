@@ -24,6 +24,9 @@
     <ClCompile Include="lex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="symbolTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assembler.h">
@@ -33,6 +36,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="symbolTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TableEntry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
