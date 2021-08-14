@@ -27,24 +27,44 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 	bool endReached = false;
 	int lineNumber = 0;
 	string line;
-	while (!endReached) {
-		getline(inputFile, line);
+	try {
+		while (!endReached) {
+			getline(inputFile, line);
 
-		lineNumber++;
+			lineNumber++;
 
-		//remove line comment if exists
-		int commentStart = line.find('#');
-		if (commentStart) {
-			line.erase(commentStart, line.size() - commentStart);
+			//remove line comment if exists
+			int commentStart = line.find('#');
+			if (commentStart) {
+				line.erase(commentStart, line.size() - commentStart);
+			}
+
+			//check for label
+			smatch labelName;
+			if (regex_search(line, labelName, RegExpr::label)) {
+				string newLabel = labelName[1];
+				line.erase(0, line.find(':') + 1);
+			}
+
+			if (line.empty()) continue; //nothing left for us to analyze
+
+			smatch symbols;//used for extraction of names of symbols
+
+			if (regex_search(line, symbols, RegExpr::directiveGlobal)) {
+				for (int i = 1; i < symbols.size(); i++) {
+					table.insertNonSection(symbols[i], 0, 0, 'g');
+				}
+			}
+
 		}
-
-		//check for label
-		smatch labelName;
-		if (regex_search(line, labelName, RegExpr::label)) {
-			string newLabel = labelName[1];
-			line.erase(0, line.find(':') + 1);
-		}
-
-		if (line.empty()) continue; //nothing left for us to analyze
 	}
+	catch (AssemblerException e) {
+		string message = "Error on line ";
+		message += lineNumber;
+		message += ": ";
+		message += e.getMsg();
+
+		throw AssemblerException(message.c_str());
+	}
+
 }

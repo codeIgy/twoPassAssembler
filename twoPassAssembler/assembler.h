@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <string>
+#include "symbolTable.h"
 
 class Assembler
 {
@@ -12,6 +13,9 @@ public:
 	void assemble(ifstream& inputFile, ofstream& outputFile);
 
 private:
+	//fields
+	int locationCounter = 0;
+	SymbolTable table;
 	void passFirstTime(ifstream& inputFile);
 	void passSecondTime();
 };

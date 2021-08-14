@@ -8,21 +8,22 @@ using namespace std;
 struct TableEntry
 {
 public:
-	TableEntry(int id, string label, int section, int value, char visibility, bool isExt, bool isAbs);
+	TableEntry();
+	TableEntry(int id, string label, int section, int value, char visibility, bool isExt = false);
 	~TableEntry();
 
 	int id;
 	string label;//label name
-	int section; //0 = undefined otherwise section id
+	int section; //0 = undefined, 1 = absolute symbol, otherwise section id
 	int value;//label value
 	char visibility;//'l' for local and 'g' for global
 	bool isExt;//whether symbol is extern
-	bool isAbs;//whether symbol is absolute
+	int size;//section size
 };
 
 TableEntry::TableEntry(int id, string label, int section, 
-	int value, char visibility, bool isExt, bool isAbs) : id(id), label(label), section(section), 
-					value(value), visibility(visibility), isExt(isExt), isAbs(isAbs){
+	int value, char visibility, bool isExt) : id(id), label(label), section(section), 
+					value(value), visibility(visibility), isExt(isExt){
 
 }
 
