@@ -48,7 +48,7 @@ void SymbolTable::insertNonSection(string label, int section, int value,
 	}
 }
 
-void SymbolTable::insertSection(string label, int value) {
+int SymbolTable::insertSection(string label, int value) {
 
 	if (enteredSymbols.find(label) != enteredSymbols.end()) {
 		throw AssemblerException("Symbol has already been declared!");
@@ -63,9 +63,36 @@ void SymbolTable::insertSection(string label, int value) {
 	entry.visibility = 'l';
 	entry.isExt = false;
 
-	sectionId++;
-
 	enteredSymbols[label] = -sectionId; //negative so that we know that this symbol is in the section part of the table
 	table.insert(table.begin() + lastSectionIndex++, entry);
 
+	return sectionId++;
+
+}
+
+void SymbolTable::updateSectionSize(int entryNum, int size)
+{
+	table[entryNum].size = size;
+}
+
+void SymbolTable::changeVisibilityToGlobal(string label)
+{
+	if (enteredSymbols.find(label) != enteredSymbols.end()) { //check for symbol
+		int index = enteredSymbols[label];
+		TableEntry& entry2 = table[sectionId + index];
+		if (canBeDeclaredGlobal(entry2)) {
+			entry2.visibility = 'g';
+		}
+		else {
+			throw AssemblerException("Can't be declared global!");
+		}
+	}
+	else {
+		insertNonSection(label, 0, 0, 'g');
+	}
+}
+
+bool SymbolTable::canBeDeclaredGlobal(TableEntry& entry)
+{
+	return !entry.isExt && entry.id == -1 && entry.section != 0 && entry.section != 1 && entry.visibility == 'l'; //id == -1 means that the symbol has yet to receive an id and that it is not a section
 }

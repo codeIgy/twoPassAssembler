@@ -18,7 +18,13 @@ public:
 
 	void insertNonSection(string label, int section, int value,
 						char visibility = 'l', bool isExt = false, bool isAbs = false);
-	void insertSection(string label, int value);
+
+	int insertSection(string label, int value);
+
+	//when we reach end of a section we need to update its size in the table
+	void updateSectionSize(int entryNum, int size);
+
+	void changeVisibilityToGlobal(string label);
 
 
 private:
@@ -26,6 +32,8 @@ private:
 	vector<TableEntry> table;
 	int sectionId = 0;
 	int lastSectionIndex = 0; //last row with section in the symbol table
+
+	bool canBeDeclaredGlobal(TableEntry& entry);
 
 };
 
