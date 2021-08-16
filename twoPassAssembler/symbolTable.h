@@ -11,11 +11,11 @@
 
 using namespace std;
 
-class SymbolTable
+class MySymbolTable
 {
 public:
-	SymbolTable();
-	~SymbolTable();
+	MySymbolTable();
+	~MySymbolTable();
 
 	void insertNonSection(string label, int section, int value,
 						char visibility = 'l', bool isExt = false, bool isAbs = false);
@@ -42,19 +42,6 @@ private:
 	bool canBeDeclaredGlobal(TableEntry& entry);
 
 };
-
-
-
-SymbolTable::SymbolTable()
-{
-	//insert undefined and absolute section
-	table.push_back(TableEntry(sectionId++,"", 0, 0, 'l'));//undefined
-	table.push_back(TableEntry(sectionId++, "", 1, 0, 'l'));//absolute
-}
-
-SymbolTable::~SymbolTable()
-{
-}
 
 #endif
 

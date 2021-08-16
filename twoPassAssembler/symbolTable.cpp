@@ -1,9 +1,9 @@
-#include "symbolTable.h"
+#include "SymbolTable.h"
 
-void SymbolTable::insertNonSection(string label, int section, int value,
-	char visibility='l', bool isExt=false, bool isAbs=false) {
+void MySymbolTable::insertNonSection(string label, int section, int value,
+	char visibility, bool isExt, bool isAbs) {
 
-	if (usedSymbols.find(label) != usedSymbols.end) {
+	if (usedSymbols.find(label) != usedSymbols.end()) {
 		usedSymbols.erase(label);
 	}
 
@@ -53,14 +53,14 @@ void SymbolTable::insertNonSection(string label, int section, int value,
 			entry.isExt = false;
 		}
 
-		enteredSymbols[label] = table.size() - sectionId; //save index of the element it possesses in the non-section part of the table
+		enteredSymbols[label] = (int)table.size() - sectionId; //save index of the element it possesses in the non-section part of the table
 		table.push_back(entry);
 	}
 }
 
-int SymbolTable::insertSection(string label, int value) {
+int MySymbolTable::insertSection(string label, int value) {
 
-	if (usedSymbols.find(label) != usedSymbols.end) {
+	if (usedSymbols.find(label) != usedSymbols.end()) {
 		usedSymbols.erase(label);
 	}
 
@@ -84,12 +84,12 @@ int SymbolTable::insertSection(string label, int value) {
 
 }
 
-void SymbolTable::updateSectionSize(int entryNum, int size)
+void MySymbolTable::updateSectionSize(int entryNum, int size)
 {
 	table[entryNum].size = size;
 }
 
-void SymbolTable::changeVisibilityToGlobal(string label)
+void MySymbolTable::changeVisibilityToGlobal(string label)
 {
 	if (enteredSymbols.find(label) != enteredSymbols.end()) { //check for symbol
 		int index = enteredSymbols[label];
@@ -106,14 +106,26 @@ void SymbolTable::changeVisibilityToGlobal(string label)
 	}
 }
 
-void SymbolTable::markAsUsed(string label)
+void MySymbolTable::markAsUsed(string label)
 {
 	if (enteredSymbols.find(label) == enteredSymbols.end()) {
 		usedSymbols.insert(label);
 	}
 }
 
-bool SymbolTable::canBeDeclaredGlobal(TableEntry& entry)
+bool MySymbolTable::canBeDeclaredGlobal(TableEntry& entry)
 {
 	return !entry.isExt && entry.id == -1 && entry.section != 0 && entry.section != 1 && entry.visibility == 'l'; //id == -1 means that the symbol has yet to receive an id and that it is not a section
+}
+
+MySymbolTable::MySymbolTable()
+{
+	//insert undefined and absolute section
+	table.push_back(TableEntry(sectionId++, "", 0, 0, 'l'));//undefined
+	table.push_back(TableEntry(sectionId++, "", 1, 0, 'l'));//absolute
+	lastSectionIndex += 2;
+}
+
+MySymbolTable::~MySymbolTable()
+{
 }

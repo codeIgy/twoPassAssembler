@@ -8,9 +8,11 @@ using namespace std;
 struct TableEntry
 {
 public:
-	TableEntry();
-	TableEntry(int id, string label, int section, int value, char visibility, bool isExt = false);
-	~TableEntry();
+	TableEntry(){}
+	TableEntry(int id, string label, int section, int value, char visibility, bool isExt = false) : id(id), label(label), section(section),
+		value(value), visibility(visibility), isExt(isExt) {}
+
+	~TableEntry(){}
 
 	int id;
 	string label;//label name
@@ -20,11 +22,4 @@ public:
 	bool isExt;//whether symbol is extern
 	int size;//section size
 };
-
-TableEntry::TableEntry(int id, string label, int section, 
-	int value, char visibility, bool isExt) : id(id), label(label), section(section), 
-					value(value), visibility(visibility), isExt(isExt){
-
-}
-
 #endif // !TABLEENTRY_H

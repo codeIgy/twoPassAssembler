@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include "assembler.h"
 
 using namespace std;
 
@@ -36,6 +37,10 @@ int main(int argc, char** argv) {
 		inputFile.close();
 		return 0;
 	}
+
+	Assembler assembler;
+
+	assembler.assemble(inputFile, outputFile);
 
 	inputFile.close();
 	outputFile.close();

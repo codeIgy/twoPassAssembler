@@ -135,6 +135,9 @@
     <ClInclude Include="symbolTable.h" />
     <ClInclude Include="TableEntry.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="test.s" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

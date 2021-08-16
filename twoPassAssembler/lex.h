@@ -16,6 +16,11 @@ public:
 	static regex directiveEqu;
 	static regex directiveEnd;
 
+	//symbol and number extraction
+	static regex symbol;
+	static regex value;
+	static regex hex;
+
 	//label regex
 	static regex label;
 

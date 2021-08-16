@@ -38,8 +38,8 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 			lineNumber++;
 
 			//remove line comment if exists
-			int commentStart = line.find('#');
-			if (commentStart) {
+			size_t commentStart = line.find('#');
+			if (commentStart != string::npos) {
 				line.erase(commentStart, line.size() - commentStart);
 			}
 
@@ -55,13 +55,31 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 			smatch symbols;//used for extraction of names of symbols
 
 			if (regex_search(line, symbols, RegExpr::directiveGlobal)) {
-				for (int i = 1; i < symbols.size(); i++) {
-					table.changeVisibilityToGlobal(symbols[i]);
+				string symbol = symbols[1];
+				table.changeVisibilityToGlobal(symbol);
+				if (symbols.size() > 1) {
+					string labels = symbols[2];
+					string::const_iterator searchStart(labels.cbegin());
+					while (regex_search(searchStart, labels.cend(), symbols, RegExpr::symbol)) {
+						symbol = symbols[0];
+						table.changeVisibilityToGlobal(symbol);
+
+						searchStart = symbols.suffix().first;
+					}
 				}
 			}
 			else if(regex_search(line,symbols, RegExpr::directiveExtern)) {
-				for (int i = 1; i < symbols.size(); i++) {
-					table.insertNonSection(symbols[i], 0, 0, 'g', true);//declare symbol as extern
+				string symbol = symbols[1];
+				table.insertNonSection(symbol, 0, 0, 'g', true);//declare symbol as extern
+				if (symbols.size() > 1) {
+					string labels = symbols[2];
+					string::const_iterator searchStart(labels.cbegin());
+					while (regex_search(searchStart, labels.cend(), symbols, RegExpr::symbol)) {
+						symbol = symbols[0];
+						table.insertNonSection(symbol, 0, 0, 'g', true);//declare symbol as extern
+
+						searchStart = symbols.suffix().first;
+					}
 				}
 			}
 			else if (regex_search(line, symbols, RegExpr::directiveSection)) {
@@ -72,22 +90,50 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 				throw "Section must be declared first!";
 			}
 			else if (regex_search(line, symbols, RegExpr::directiveWord)) {
-				for (int i = 1; i < symbols.size(); i++) {
-					table.markAsUsed(symbols[i]);//just declare symbols
-					locationCounter += 2;
+				string arg = symbols[1];
+				if (regex_match(arg, RegExpr::symbol)) {
+					table.markAsUsed(arg);
+				}
+				locationCounter += 2;
+
+				if (symbols.size() > 1) {
+					//used symbols
+					string arguments = symbols[2];
+					string::const_iterator searchStartSymbol(arguments.cbegin());
+					while (regex_search(searchStartSymbol, arguments.cend(), symbols, RegExpr::symbol)) {
+						arg = symbols[0];
+						table.markAsUsed(arg);
+						locationCounter += 2;
+
+						searchStartSymbol = symbols.suffix().first;//iterate
+					}
+
+					//values - needed for location counter
+					string::const_iterator searchStartValue(arguments.cbegin());
+					while (regex_search(searchStartValue, arguments.cend(), symbols, RegExpr::value)) {
+						locationCounter += 2;
+
+						searchStartSymbol = symbols.suffix().first;//iterate
+					}
 				}
 			}
 			else if (regex_search(line, symbols, RegExpr::directiveSkip)) {
-				stringstream s(symbols[1]);
-				int num;
-				s >> num;
+				string value = symbols[1];
+				int base = 10;
+				if (regex_search(value, RegExpr::hex)) {
+					base = 16;
+				}
+				int num = stoi(value, nullptr, base);
 				locationCounter += num;
 			}
 			else if (regex_search(line, symbols, RegExpr::directiveEqu)) {
 				string label = symbols[1];
-				stringstream s(symbols[2]);
-				int num;
-				s >> num;
+				string value = symbols[2];
+				int base = 10;
+				if (regex_search(value, RegExpr::hex)) {
+					base = 16;
+				}
+				int num = stoi(value, nullptr, base);
 
 				table.insertNonSection(label, 1, num, 'l', false, true);
 			}
@@ -106,4 +152,8 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 		throw AssemblerException(message.c_str());
 	}
 
+}
+
+void Assembler::passSecondTime()
+{
 }

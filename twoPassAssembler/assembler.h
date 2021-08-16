@@ -16,7 +16,7 @@ private:
 	//fields
 	int sectionIndex = 0;
 	int locationCounter = 0;
-	SymbolTable table;
+	MySymbolTable table;
 	void passFirstTime(ifstream& inputFile);
 	void passSecondTime();
 };
