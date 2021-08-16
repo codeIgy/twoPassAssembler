@@ -3,9 +3,19 @@
 void SymbolTable::insertNonSection(string label, int section, int value,
 	char visibility='l', bool isExt=false, bool isAbs=false) {
 
+	if (usedSymbols.find(label) != usedSymbols.end) {
+		usedSymbols.erase(label);
+	}
+
 	if (enteredSymbols.find(label) != enteredSymbols.end()) { //check for duplicates
 		int index = enteredSymbols[label];
+
+		if (index < 0) {//meaning the symbol is an section
+			throw "Symbol has been alredy declared as a section!";
+		}
+
 		TableEntry& entry2 = table[sectionId + index];
+
 		if (entry2.visibility = 'g' && entry2.section == 0 && !entry2.isExt)//exception if this is a global symbol which needs to be corrected
 		{
 			entry2.section = section;
@@ -50,6 +60,10 @@ void SymbolTable::insertNonSection(string label, int section, int value,
 
 int SymbolTable::insertSection(string label, int value) {
 
+	if (usedSymbols.find(label) != usedSymbols.end) {
+		usedSymbols.erase(label);
+	}
+
 	if (enteredSymbols.find(label) != enteredSymbols.end()) {
 		throw AssemblerException("Symbol has already been declared!");
 	}
@@ -89,6 +103,13 @@ void SymbolTable::changeVisibilityToGlobal(string label)
 	}
 	else {
 		insertNonSection(label, 0, 0, 'g');
+	}
+}
+
+void SymbolTable::markAsUsed(string label)
+{
+	if (enteredSymbols.find(label) == enteredSymbols.end()) {
+		usedSymbols.insert(label);
 	}
 }
 

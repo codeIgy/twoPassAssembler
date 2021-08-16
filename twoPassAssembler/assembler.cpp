@@ -3,6 +3,7 @@
 #include "assembler.h"
 #include "assemblerException.h"
 #include "lex.h"
+#include <sstream>
 
 Assembler::Assembler()
 {
@@ -27,6 +28,9 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 	bool endReached = false;
 	int lineNumber = 0;
 	string line;
+
+	locationCounter = 0;
+	sectionIndex = 0;
 	try {
 		while (!endReached) {
 			getline(inputFile, line);
@@ -52,8 +56,43 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 
 			if (regex_search(line, symbols, RegExpr::directiveGlobal)) {
 				for (int i = 1; i < symbols.size(); i++) {
-					table.insertNonSection(symbols[i], 0, 0, 'g');
+					table.changeVisibilityToGlobal(symbols[i]);
 				}
+			}
+			else if(regex_search(line,symbols, RegExpr::directiveExtern)) {
+				for (int i = 1; i < symbols.size(); i++) {
+					table.insertNonSection(symbols[i], 0, 0, 'g', true);//declare symbol as extern
+				}
+			}
+			else if (regex_search(line, symbols, RegExpr::directiveSection)) {
+				sectionIndex = table.insertSection(symbols[1], 0);
+				locationCounter = 0;
+			}
+			else if (sectionIndex == 0) { //section has not been defined!
+				throw "Section must be declared first!";
+			}
+			else if (regex_search(line, symbols, RegExpr::directiveWord)) {
+				for (int i = 1; i < symbols.size(); i++) {
+					table.markAsUsed(symbols[i]);//just declare symbols
+					locationCounter += 2;
+				}
+			}
+			else if (regex_search(line, symbols, RegExpr::directiveSkip)) {
+				stringstream s(symbols[1]);
+				int num;
+				s >> num;
+				locationCounter += num;
+			}
+			else if (regex_search(line, symbols, RegExpr::directiveEqu)) {
+				string label = symbols[1];
+				stringstream s(symbols[2]);
+				int num;
+				s >> num;
+
+				table.insertNonSection(label, 1, num, 'l', false, true);
+			}
+			else if (regex_search(line, RegExpr::directiveEnd)) {
+				endReached = true;
 			}
 
 		}

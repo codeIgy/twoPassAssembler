@@ -14,6 +14,7 @@ public:
 
 private:
 	//fields
+	int sectionIndex = 0;
 	int locationCounter = 0;
 	SymbolTable table;
 	void passFirstTime(ifstream& inputFile);
