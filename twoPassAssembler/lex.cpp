@@ -60,4 +60,4 @@ regex RegExpr::addressSymbolJmp("^\\*([A-Za-z_]\\w*)\\s*$");
 regex RegExpr::directRegJmp("^\\*(r[0-7]|sp|pc|psw)\\s*$");
 regex RegExpr::indirectRegJmp("^\\*\\[\\s*(r[0-7]|sp|pc|psw)\\s*\\]\\s*$");
 regex RegExpr::indirectSumLiteralJmp("^\\*\\[\\s*(r[0-7]|sp|pc|psw)\\s*\\+\\s*(0|-?[1-9]\\d*|0[xX][a-fA-F0-9]+)\\s*\\]\\s*$");
-regex RegExpr::indirectSumSymbolJmp("^\\[\\s*(r[0-7]|sp|pc|psw)\\s*\\+\\s*([A-Za-z_]\\w*)\\s*\\]\\s*$");
+regex RegExpr::indirectSumSymbolJmp("^\\*\\[\\s*(r[0-7]|sp|pc|psw)\\s*\\+\\s*([A-Za-z_]\\w*)\\s*\\]\\s*$");
