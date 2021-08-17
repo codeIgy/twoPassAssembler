@@ -51,6 +51,29 @@ public:
 	static regex shr;
 	static regex ldrFixed;
 	static regex strFixed;
+
+	//operand addressing for ldr str
+	static regex immLiteral;
+	static regex immSymbol;
+	static regex addressLiteral;
+	static regex addressSymbol;
+	static regex pcRel;
+	static regex directReg;
+	static regex indirectReg;
+	static regex indirectSumLiteral;
+	static regex indirectSumSymbol;
+
+	//operand addressing for jump-like instructions
+	static regex immLiteralJmp;
+	static regex immSymbolJmp;
+	static regex pcRelJmp;
+	static regex addressLiteralJmp;
+	static regex addressSymbolJmp;
+	static regex directRegJmp;
+	static regex indirectRegJmp;
+	static regex indirectSumLiteralJmp;
+	static regex indirectSumSymbolJmp;
+
 };
 
 #endif
