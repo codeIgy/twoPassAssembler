@@ -113,6 +113,25 @@ void MySymbolTable::markAsUsed(string label)
 	}
 }
 
+void MySymbolTable::clearTable()
+{
+	enteredSymbols.clear();
+	usedSymbols.clear();
+	table.clear();
+	sectionId = 0;
+	lastSectionIndex = 0;
+}
+
+bool MySymbolTable::areAllSymbolsKnown()
+{
+	return  usedSymbols.empty();
+}
+
+unordered_set<string> MySymbolTable::getUnknownUsedSymbols()
+{
+	return usedSymbols;
+}
+
 bool MySymbolTable::canBeDeclaredGlobal(TableEntry& entry)
 {
 	return !entry.isExt && entry.id == -1 && entry.section != 0 && entry.section != 1 && entry.visibility == 'l'; //id == -1 means that the symbol has yet to receive an id and that it is not a section

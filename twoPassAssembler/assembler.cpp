@@ -1,9 +1,10 @@
 #include <iostream>
+#include <unordered_set>
 
 #include "assembler.h"
 #include "assemblerException.h"
 #include "lex.h"
-#include <sstream>
+
 
 Assembler::Assembler()
 {
@@ -16,7 +17,10 @@ Assembler::~Assembler()
 void Assembler::assemble(ifstream& inputFile, ofstream& outputFile) {
 	try
 	{
+		table.clearTable();
+
 		passFirstTime(inputFile);
+
 		passSecondTime();
 	}
 	catch (AssemblerException e) {
@@ -140,12 +144,31 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 			else if (regex_search(line, RegExpr::directiveEnd)) {
 				endReached = true;
 			}
+			else {
+				throw "Syntax error!";
+			}
 
+		}
+
+		if (!table.areAllSymbolsKnown()) {
+			string msg = "Undefined symbols:";
+			for (auto s : table.getUnknownUsedSymbols()) {
+				msg += " ";
+				msg += s;
+				msg += ",";
+			}
+			msg.erase(msg.end() - 1);
+			
+			throw msg;
 		}
 	}
 	catch (AssemblerException e) {
-		string message = "Error on line ";
-		message += lineNumber;
+		string message = "Error";
+		if (table.areAllSymbolsKnown())
+		{
+			message += " on line ";
+			message += lineNumber;
+		}
 		message += ": ";
 		message += e.getMsg();
 
