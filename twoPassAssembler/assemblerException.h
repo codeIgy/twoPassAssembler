@@ -8,10 +8,10 @@ using namespace std;
 class AssemblerException : public exception
 {
 public:
-	AssemblerException(const char* msg) : msg(msg) {};
-	const char* getMsg() { return msg; }
+	AssemblerException(string msg) : msg(msg) {};
+	string getMsg() { return msg; }
 private:
-	const char* msg;
+	string msg;
 };
 
 #endif

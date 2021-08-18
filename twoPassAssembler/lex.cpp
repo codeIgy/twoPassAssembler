@@ -20,7 +20,7 @@ regex RegExpr::interrupt("^\\s*int\\s+(r[0-7]|sp|pc|psw)\\s*$");
 regex RegExpr::iret("^\\s*iret\\s*$");
 regex RegExpr::callFixed("^\\s*call\\s+");
 regex RegExpr::ret("^\\s*ret\\s*$");
-regex RegExpr::jmpFixed("^\\s*jump\\s+");
+regex RegExpr::jmpFixed("^\\s*jmp\\s+");
 regex RegExpr::jeqFixed("^\\s*jeq\\s+");
 regex RegExpr::jneFixed("^\\s*jne\\s+");
 regex RegExpr::jgtFixed("^\\s*jgt\\s+");

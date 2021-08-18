@@ -117,8 +117,13 @@ void MySymbolTable::clearTable()
 {
 	enteredSymbols.clear();
 	usedSymbols.clear();
-	table.clear();
-	sectionId = 0;
+
+	//erase every table row except the first 2 which represent undefined and absolute section
+	while (table.size() > 2) {
+		table.erase(table.begin() + 2);
+	}
+
+	sectionId = 2;
 	lastSectionIndex = 0;
 }
 
