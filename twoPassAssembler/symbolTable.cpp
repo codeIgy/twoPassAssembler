@@ -72,13 +72,13 @@ int MySymbolTable::insertSection(string label, int value) {
 
 	entry.id = sectionId;
 	entry.label = label;
-	entry.section = sectionId; //undefined
+	entry.section = sectionId;
 	entry.value = 0;
 	entry.visibility = 'l';
 	entry.isExt = false;
 
 	enteredSymbols[label] = -sectionId; //negative so that we know that this symbol is in the section part of the table
-	table.insert(table.begin() + lastSectionIndex++, entry);
+	table.insert(table.begin() + sectionId, entry);
 
 	return sectionId++;
 
@@ -124,12 +124,29 @@ void MySymbolTable::clearTable()
 	}
 
 	sectionId = 2;
-	lastSectionIndex = 0;
 }
 
 bool MySymbolTable::areAllSymbolsKnown()
 {
 	return  usedSymbols.empty();
+}
+
+void MySymbolTable::setOrdinals()
+{
+	for (auto it = table.begin() + sectionId; it != table.end(); it++) {
+		it->id = sectionId++;
+	}
+}
+
+TableEntry& MySymbolTable::getSymbol(string name)
+{
+	int index = enteredSymbols.at(name);
+
+	if (index < 0) {
+		index = -index;
+	}
+
+	return table[index];
 }
 
 unordered_set<string> MySymbolTable::getUnknownUsedSymbols()
@@ -147,7 +164,6 @@ MySymbolTable::MySymbolTable()
 	//insert undefined and absolute section
 	table.push_back(TableEntry(sectionId++, "", 0, 0, 'l'));//undefined
 	table.push_back(TableEntry(sectionId++, "", 1, 0, 'l'));//absolute
-	lastSectionIndex += 2;
 }
 
 MySymbolTable::~MySymbolTable()

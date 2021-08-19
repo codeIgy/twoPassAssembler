@@ -44,6 +44,9 @@
     <ClInclude Include="TableEntry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="relocationEntry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.s" />

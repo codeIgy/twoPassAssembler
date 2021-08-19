@@ -132,6 +132,7 @@
     <ClInclude Include="assembler.h" />
     <ClInclude Include="assemblerException.h" />
     <ClInclude Include="lex.h" />
+    <ClInclude Include="relocationEntry.h" />
     <ClInclude Include="symbolTable.h" />
     <ClInclude Include="TableEntry.h" />
   </ItemGroup>

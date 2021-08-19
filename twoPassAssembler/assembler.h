@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include "symbolTable.h"
+#include "relocationEntry.h"
 
 class Assembler
 {
@@ -17,7 +18,12 @@ private:
 	int sectionIndex = 0;
 	int locationCounter = 0;
 	MySymbolTable table;
+	vector<RelocationEntry>  relocTable;
+
+	void writeRelocData(ofstream& outputFile);
 	void passFirstTime(ifstream& inputFile);
-	void passSecondTime();
+	void passSecondTime(ifstream& inputFile, ofstream& outputFile);
+
+	
 };
 #endif

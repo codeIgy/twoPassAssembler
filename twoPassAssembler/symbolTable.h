@@ -37,13 +37,20 @@ public:
 	//check if there are unknown symbols
 	bool areAllSymbolsKnown();
 
+	//after the first pass we need to enumerate non-section table entries (give them ids)
+	void setOrdinals();
+
+	//return symbol data
+	TableEntry& getSymbol(string name);
+
+	//acquire undefined and undeclared symbols if any
 	unordered_set<string> getUnknownUsedSymbols();
+
 private:
 	unordered_map<string, int> enteredSymbols; //used for quick access to elements in the table. key -> label, value -> row index in table that is slit in half: if the value is negative than the symbol is in the section symbols part of the table and if positive and zero than in the non-section part
 	unordered_set<string> usedSymbols;//this should be empty after the first pass, if not then we have some unknown symbols
 	vector<TableEntry> table;
 	int sectionId = 0;
-	int lastSectionIndex = 0; //last row with section in the symbol table
 
 	bool canBeDeclaredGlobal(TableEntry& entry);
 

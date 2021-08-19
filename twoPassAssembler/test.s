@@ -27,6 +27,7 @@ jmp *r1
 jmp *[ r1 ]
 jmp *[r7 + 3]
 jmp *[pc + a]
+.section ivt2
 ldr r0, $4
 ldr r0, $e
 ldr r0, 0x10
