@@ -50,5 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="test.s" />
+    <None Include="test2.s" />
   </ItemGroup>
 </Project>

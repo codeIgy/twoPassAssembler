@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 		inputFileName = argv[1];
 		outputFileName = "output.o";
 	}
-	else if(argc == 4 && argv[1] == "-o"){
+	else if(argc == 4 && string(argv[1]) ==  "-o"){
 		inputFileName = argv[3];
 		outputFileName = argv[2];
 	}

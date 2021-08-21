@@ -138,6 +138,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="test.s" />
+    <None Include="test2.s" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
