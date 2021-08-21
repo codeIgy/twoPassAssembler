@@ -27,6 +27,8 @@ private:
 	void writeByte(int value, ofstream& outputFile);
 	void write2Bytes(int value, ofstream& outputFile);
 	int extractRegInfo(string s);
+	void processAndWriteAddressJmp(string s, ofstream& outputFile);
+	void processAndWriteAddress(string s, ofstream& outputFile);
 
 	void passFirstTime(ifstream& inputFile);
 	void passSecondTime(ifstream& inputFile, ofstream& outputFile);
