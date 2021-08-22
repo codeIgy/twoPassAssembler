@@ -31,6 +31,17 @@ void Assembler::assemble(ifstream& inputFile, ofstream& outputFile) {
 	}
 }
 
+void Assembler::writeRelocData(ofstream & outputFile)
+{
+	outputFile << "$relocation data" << endl << setw(10) << "offset" << "type" << "ordinal" << endl;
+	
+	for (auto r : relocTable) {
+		outputFile << setw(10) << r.offset << (RelocationEntry::R_386_16 == r.relType ? "R_386_16" : "R_386_PC16") << r.ordinal << endl;
+	}
+
+	relocTable.clear();
+}
+
 void Assembler::writeSection(TableEntry & section, ofstream & outputFile)
 {
 	outputFile << "$." << section.label << ":" << hex << section.size << endl;
@@ -43,17 +54,17 @@ void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, Relocati
 	RelocationEntry entry;
 
 	if (symbol.section == 1) { //absolute symbol
-		if (relocType == RelocationEntry::R_386_32) {
+		if (relocType == RelocationEntry::R_386_16) {
 			write2Bytes(symbol.value, outputFile);
 		}
-		else {
+		else {//not covered
 			int offset = symbol.value - 2;
 			write2Bytes(symbol.value, outputFile);
 		}
 	}
 	else {
-		if (relocType == RelocationEntry::R_386_32) {
-			entry.relType = RelocationEntry::R_386_32;
+		if (relocType == RelocationEntry::R_386_16) {
+			entry.relType = RelocationEntry::R_386_16;
 			if (symbol.isExt || symbol.visibility == 'g') { //global symbol
 				entry.offset = locationCounter + 3;
 				entry.ordinal = symbol.id;
@@ -67,18 +78,23 @@ void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, Relocati
 			relocTable.push_back(entry);
 		}
 		else {
-			entry.relType = RelocationEntry::R_386_PC32;
-			if (symbol.isExt || symbol.visibility == 'g') { //global symbol
-				entry.offset = locationCounter + 3;
-				entry.ordinal = symbol.id;
-				write2Bytes(0 - 2, outputFile);
+			if (sectionIndex == symbol.section) {
+				write2Bytes(symbol.value - locationCounter - 5, outputFile);
 			}
-			else { //local symbol
-				entry.offset = locationCounter + 3;
-				entry.ordinal = symbol.section;
-				write2Bytes(symbol.value - 2, outputFile);
+			else {
+				entry.relType = RelocationEntry::R_386_PC16;
+				if (symbol.isExt || symbol.visibility == 'g') { //global symbol
+					entry.offset = locationCounter + 3;
+					entry.ordinal = symbol.id;
+					write2Bytes(0 - 2, outputFile);
+				}
+				else { //local symbol
+					entry.offset = locationCounter + 3;
+					entry.ordinal = symbol.section;
+					write2Bytes(symbol.value - 2, outputFile);
+				}
+				relocTable.push_back(entry);
 			}
-			relocTable.push_back(entry);
 		}
 	}
 }
@@ -147,19 +163,120 @@ int Assembler::extractRegInfo(string s)
 	return num;
 }
 
+void Assembler::processAndWriteAddress(string s, int reg1, ofstream & outputFile)
+{
+	smatch symbols;
+	int mask = 0x0F;
+	if (regex_search(s, symbols, RegExpr::indirectReg)) {
+		int reg2 = extractRegInfo(symbols[1]);
+		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
+		writeByte(0x02, outputFile);
+		locationCounter += 3;
+	}
+	else if (regex_search(s, symbols, RegExpr::directReg)) {
+		int reg2 = extractRegInfo(symbols[1]);
+		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
+		writeByte(0x01, outputFile);
+		locationCounter += 3;
+	}
+	else if (regex_search(s, symbols, RegExpr::immLiteral)) {
+		writeByte(((mask & reg1) << 4) | 0x0F, outputFile);
+		writeByte(0x00, outputFile);
+
+		int value;
+		string numStr = symbols[1];
+		if (regex_search(numStr, RegExpr::hex)) {
+			value = stoi(numStr, nullptr, 16);
+		}
+		else {
+			value = stoi(numStr);
+		}
+
+		write2Bytes(value, outputFile);
+		locationCounter += 5;
+	}
+	else if (regex_search(s, symbols, RegExpr::addressLiteral)) {
+		writeByte(((mask & reg1) << 4) | 0x0F, outputFile);
+		writeByte(0x04, outputFile);
+
+		int value;
+		string numStr = symbols[1];
+		if (regex_search(numStr, RegExpr::hex)) {
+			value = stoi(numStr, nullptr, 16);
+		}
+		else {
+			value = stoi(numStr);
+		}
+
+		write2Bytes(value, outputFile);
+		locationCounter += 5;
+	}
+	else if (regex_search(s, symbols, RegExpr::indirectSumLiteral)) {
+		int reg2 = extractRegInfo(symbols[1]);
+		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
+		writeByte(0x03, outputFile);
+
+		int value;
+		string numStr = symbols[1];
+		if (regex_search(numStr, RegExpr::hex)) {
+			value = stoi(numStr, nullptr, 16);
+		}
+		else {
+			value = stoi(numStr);
+		}
+
+		write2Bytes(value, outputFile);
+		locationCounter += 5;
+	}
+	else if (regex_search(s, symbols, RegExpr::immSymbol)) {
+		writeByte(((mask & reg1) << 4) | 0x0F, outputFile);
+		writeByte(0x00, outputFile);
+
+		writeSymbol(table.getSymbol(symbols[1]), outputFile);
+
+		locationCounter += 5;
+	}
+	else if (regex_search(s, symbols, RegExpr::pcRel)) {
+		int reg2 = 0x07;
+		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
+		writeByte(0x03, outputFile);
+
+		writeSymbol(table.getSymbol(symbols[1]), outputFile, RelocationEntry::R_386_PC16);
+
+		locationCounter += 5;
+	}
+	else if (regex_search(s, symbols, RegExpr::addressSymbol)) {
+		writeByte(((mask & reg1) << 4) | 0x0F, outputFile);
+		writeByte(0x04, outputFile);
+
+		writeSymbol(table.getSymbol(symbols[1]), outputFile);
+
+		locationCounter += 5;
+	}
+	else if (regex_search(s, symbols, RegExpr::indirectSumSymbol)) {
+		int reg2 = extractRegInfo(symbols[1]);
+		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
+		writeByte(0x03, outputFile);
+
+		writeSymbol(table.getSymbol(symbols[1]), outputFile);
+
+		locationCounter += 5;
+	}
+}
+
 void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile)
 {
 	smatch symbols;
-
+	int mask = 0x0F;
 	if (regex_search(s, symbols, RegExpr::indirectRegJmp)) {
 		int reg = extractRegInfo(symbols[1]);
-		writeByte(0xF0 | reg, outputFile);
+		writeByte(0xF0 | (mask & reg), outputFile);
 		writeByte(0x02, outputFile);
 		locationCounter += 3;
 	}
 	else if (regex_search(s, symbols, RegExpr::directRegJmp)) {
 		int reg = extractRegInfo(symbols[1]);
-		writeByte(0xF0 | reg, outputFile);
+		writeByte(0xF0 | (mask & reg), outputFile);
 		writeByte(0x01, outputFile);
 		locationCounter += 3;
 	}
@@ -197,7 +314,7 @@ void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile)
 	}
 	else if (regex_search(s, symbols, RegExpr::indirectSumLiteralJmp)) {
 		int reg = extractRegInfo(symbols[1]);
-		writeByte(0xF0 | reg, outputFile);
+		writeByte(0xF0 | (mask & reg), outputFile);
 		writeByte(0x03, outputFile);
 
 		int value;
@@ -222,10 +339,10 @@ void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile)
 	}
 	else if (regex_search(s, symbols, RegExpr::pcRelJmp)) {
 		int reg = 0x07;
-		writeByte(0xF0 | reg, outputFile);
-		writeByte(0x03, outputFile);
+		writeByte(0xF0 | (mask & reg), outputFile);
+		writeByte(0x05, outputFile);
 
-		writeSymbol(table.getSymbol(symbols[1]), outputFile, RelocationEntry::R_386_PC32);
+		writeSymbol(table.getSymbol(symbols[1]), outputFile, RelocationEntry::R_386_PC16);
 
 		locationCounter += 5;
 	}
@@ -239,7 +356,7 @@ void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile)
 	}
 	else if (regex_search(s, symbols, RegExpr::indirectSumSymbolJmp)) {
 		int reg = extractRegInfo(symbols[1]);
-		writeByte(0xF0 | reg, outputFile);
+		writeByte(0xF0 | (mask & reg), outputFile);
 		writeByte(0x03, outputFile);
 
 		writeSymbol(table.getSymbol(symbols[1]), outputFile);
@@ -613,6 +730,8 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile)
 
 	inputFile.seekg(0);
 
+	table.printSymbolTable(outputFile, outputFile);
+
 	locationCounter = 0;
 	sectionIndex = 0;
 	try {
@@ -737,91 +856,39 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile)
 
 				writeByte(0x30, outputFile);
 
-				processAndWriteAddress(line, outputFile);
-
-
+				processAndWriteAddressJmp(line, outputFile);
 			}
 			else if (regex_search(line, RegExpr::ret)) {
 				writeByte(0x40, outputFile);
 				locationCounter += 1;
 			}
 			else if (regex_search(line, RegExpr::jmpFixed)) {
-				//ostavio
 				line = regex_replace(line, RegExpr::jmpFixed, "");
 
-				if (regex_search(line, RegExpr::indirectRegJmp) || regex_search(line, RegExpr::directRegJmp)) {
-					locationCounter += 3;
-				}
-				else if (regex_search(line, RegExpr::immLiteralJmp) || regex_search(line, RegExpr::immSymbolJmp) || regex_search(line, RegExpr::pcRelJmp) || regex_search(line, RegExpr::addressLiteralJmp) || regex_search(line, RegExpr::addressSymbolJmp)
-					|| regex_search(line, RegExpr::indirectSumLiteralJmp) || regex_search(line, RegExpr::indirectSumSymbolJmp)) {
-					locationCounter += 5;
-				}
+				writeByte(0x50, outputFile);
+
+				processAndWriteAddressJmp(line, outputFile);
 			}
 			else if (regex_search(line, RegExpr::jeqFixed)) {
 				line = regex_replace(line, RegExpr::jeqFixed, "");
 
-				if (regex_search(line, RegExpr::indirectRegJmp) || regex_search(line, RegExpr::directRegJmp)) {
-					locationCounter += 3;
-				}
-				else if (regex_search(line, RegExpr::immLiteralJmp) || regex_search(line, RegExpr::addressLiteralJmp)
-					|| regex_search(line, RegExpr::indirectSumLiteralJmp)) {
-					locationCounter += 5;
-				}
-				else if (regex_search(line, symbols, RegExpr::immSymbolJmp) || regex_search(line, symbols, RegExpr::pcRelJmp) || regex_search(line, symbols, RegExpr::addressSymbolJmp)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[1]);
-				}
-				else if (regex_search(line, symbols, RegExpr::indirectSumSymbolJmp)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[2]);
-				}
-				else {
-					throw AssemblerException("Syntax error!");
-				}
+				writeByte(0x51, outputFile);
+
+				processAndWriteAddressJmp(line, outputFile);
 			}
 			else if (regex_search(line, RegExpr::jneFixed)) {
 				line = regex_replace(line, RegExpr::jneFixed, "");
 
-				if (regex_search(line, RegExpr::indirectRegJmp) || regex_search(line, RegExpr::directRegJmp)) {
-					locationCounter += 3;
-				}
-				else if (regex_search(line, RegExpr::immLiteralJmp) || regex_search(line, RegExpr::addressLiteralJmp)
-					|| regex_search(line, RegExpr::indirectSumLiteralJmp)) {
-					locationCounter += 5;
-				}
-				else if (regex_search(line, symbols, RegExpr::immSymbolJmp) || regex_search(line, symbols, RegExpr::pcRelJmp) || regex_search(line, symbols, RegExpr::addressSymbolJmp)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[1]);
-				}
-				else if (regex_search(line, symbols, RegExpr::indirectSumSymbolJmp)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[2]);
-				}
-				else {
-					throw AssemblerException("Syntax error!");
-				}
+				writeByte(0x52, outputFile);
+
+				processAndWriteAddressJmp(line, outputFile);
 			}
 			else if (regex_search(line, RegExpr::jgtFixed)) {
 				line = regex_replace(line, RegExpr::jgtFixed, "");
 
-				if (regex_search(line, RegExpr::indirectRegJmp) || regex_search(line, RegExpr::directRegJmp)) {
-					locationCounter += 3;
-				}
-				else if (regex_search(line, RegExpr::immLiteralJmp) || regex_search(line, RegExpr::addressLiteralJmp)
-					|| regex_search(line, RegExpr::indirectSumLiteralJmp)) {
-					locationCounter += 5;
-				}
-				else if (regex_search(line, symbols, RegExpr::immSymbolJmp) || regex_search(line, symbols, RegExpr::pcRelJmp) || regex_search(line, symbols, RegExpr::addressSymbolJmp)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[1]);
-				}
-				else if (regex_search(line, symbols, RegExpr::indirectSumSymbolJmp)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[2]);
-				}
-				else {
-					throw AssemblerException("Syntax error!");
-				}
+				writeByte(0x53, outputFile);
+
+				processAndWriteAddressJmp(line, outputFile);
 			}
 			else if (regex_search(line, symbols, RegExpr::push)) {
 				int reg = extractRegInfo(symbols[1]);
@@ -928,59 +995,22 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile)
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::ldrFixed)) {
+				int reg1 = extractRegInfo(symbols[1]);
 				line = regex_replace(line, RegExpr::ldrFixed, "");
 
-				if (regex_search(line, RegExpr::indirectReg) || regex_search(line, RegExpr::directReg)) {
-					locationCounter += 3;
-				}
-				else if (regex_search(line, RegExpr::immLiteral) || regex_search(line, RegExpr::addressLiteral)
-					|| regex_search(line, RegExpr::indirectSumLiteral)) {
-					locationCounter += 5;
-				}
-				else if (regex_search(line, symbols, RegExpr::immSymbol) || regex_search(line, symbols, RegExpr::pcRel) || regex_search(line, symbols, RegExpr::addressSymbol)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[1]);
-				}
-				else if (regex_search(line, symbols, RegExpr::indirectSumSymbol)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[2]);
-				}
-				else {
-					throw AssemblerException("Syntax error!");
-				}
+				writeByte(0xA0, outputFile);
+
+				processAndWriteAddress(line, reg1, outputFile);
 			}
 			else if (regex_search(line, symbols, RegExpr::strFixed)) {
+				int reg1 = extractRegInfo(symbols[1]);
 				line = regex_replace(line, RegExpr::strFixed, "");
 
-				if (regex_search(line, RegExpr::indirectReg) || regex_search(line, RegExpr::directReg)) {
-					locationCounter += 3;
-				}
-				else if (regex_search(line, RegExpr::immLiteral) || regex_search(line, RegExpr::addressLiteral)
-					|| regex_search(line, RegExpr::indirectSumLiteral)) {
-					locationCounter += 5;
-				}
-				else if (regex_search(line, symbols, RegExpr::immSymbol) || regex_search(line, symbols, RegExpr::pcRel) || regex_search(line, symbols, RegExpr::addressSymbol)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[1]);
-				}
-				else if (regex_search(line, symbols, RegExpr::indirectSumSymbol)) {
-					locationCounter += 5;
-					table.markAsUsed(symbols[2]);
-				}
+				writeByte(0xB0, outputFile);
+
+				processAndWriteAddress(line, reg1, outputFile);
 			}
 
-		}
-
-		if (!table.areAllSymbolsKnown()) {
-			string msg = "Undefined symbols:";
-			for (auto s : table.getUnknownUsedSymbols()) {
-				msg += " ";
-				msg += s;
-				msg += ",";
-			}
-			msg.erase(msg.end() - 1);
-
-			throw AssemblerException(msg);
 		}
 	}
 	catch (AssemblerException e) {

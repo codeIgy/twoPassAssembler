@@ -4,7 +4,7 @@
 #include <string>
 
 struct RelocationEntry {
-	enum type{R_386_32 , R_386_PC32};
+	enum type{R_386_16 , R_386_PC16};
 	RelocationEntry(){}
 	RelocationEntry(int offset, type relType, int ordinal) : offset(offset), 
 		relType(relType), ordinal(ordinal) {}

@@ -1,5 +1,5 @@
 #include "SymbolTable.h"
-
+#include <iomanip>
 void MySymbolTable::insertNonSection(string label, int section, int value,
 	char visibility, bool isExt, bool isAbs) {
 
@@ -152,6 +152,15 @@ TableEntry& MySymbolTable::getSymbol(string name)
 unordered_set<string> MySymbolTable::getUnknownUsedSymbols()
 {
 	return usedSymbols;
+}
+
+void MySymbolTable::printSymbolTable(ofstream & outputFileTxt, ofstream & outputFileBinary)
+{
+	outputFileTxt << setw(10) << left << hex << "id" << setw(12) << "name" << setw(10) << "section" << "value" << "visibility" << "is external" << "size" << endl;
+
+	for (auto entry : table) {
+		outputFileTxt << setw(10) << left << hex << entry.id << setw(12) << entry.label << setw(10) << entry.section << entry.value << entry.visibility << entry.isExt << entry.size << endl;
+	}
 }
 
 bool MySymbolTable::canBeDeclaredGlobal(TableEntry& entry)

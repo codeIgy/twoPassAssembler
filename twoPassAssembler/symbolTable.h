@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <fstream>
 #include "TableEntry.h"
 #include "assemblerException.h"
 
@@ -45,6 +46,8 @@ public:
 
 	//acquire undefined and undeclared symbols if any
 	unordered_set<string> getUnknownUsedSymbols();
+
+	void printSymbolTable(ofstream& outputFileTxt, ofstream& outputFileBinary);
 
 private:
 	unordered_map<string, int> enteredSymbols; //used for quick access to elements in the table. key -> label, value -> row index in table that is slit in half: if the value is negative than the symbol is in the section symbols part of the table and if positive and zero than in the non-section part
