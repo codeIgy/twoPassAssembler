@@ -14,12 +14,12 @@ public:
 
 	~TableEntry(){}
 
-	int id;
-	string label;//label name
-	int section; //0 = undefined, 1 = absolute symbol, otherwise section id
-	int value;//label value
-	char visibility;//'l' for local and 'g' for global
-	bool isExt;//whether symbol is extern
-	int size;//section size
+	int id = 0;
+	string label = "";//label name
+	int section = 0; //0 = undefined, 1 = absolute symbol, otherwise section id
+	int value = 0;//label value
+	char visibility = 'l';//'l' for local and 'g' for global
+	bool isExt = false;//whether symbol is extern
+	int size = 0;//section size
 };
 #endif // !TABLEENTRY_H

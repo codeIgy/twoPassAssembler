@@ -16,7 +16,7 @@ void MySymbolTable::insertNonSection(string label, int section, int value,
 
 		TableEntry& entry2 = table[sectionId + index];
 
-		if (entry2.visibility = 'g' && entry2.section == 0 && !entry2.isExt)//exception if this is a global symbol which needs to be corrected
+		if (entry2.visibility == 'g' && entry2.section == 0 && !entry2.isExt)//exception if this is a global symbol which needs to be corrected
 		{
 			entry2.section = section;
 			entry2.value = value;
@@ -53,7 +53,7 @@ void MySymbolTable::insertNonSection(string label, int section, int value,
 			entry.isExt = false;
 		}
 
-		enteredSymbols[label] = (int)table.size() - sectionId; //save index of the element it possesses in the non-section part of the table
+		enteredSymbols.insert({ label, (int)table.size() - sectionId }); //save index of the element it possesses in the non-section part of the table
 		table.push_back(entry);
 	}
 }
@@ -77,8 +77,10 @@ int MySymbolTable::insertSection(string label, int value) {
 	entry.visibility = 'l';
 	entry.isExt = false;
 
-	enteredSymbols[label] = -sectionId; //negative so that we know that this symbol is in the section part of the table
+	enteredSymbols.insert({ label, -sectionId }); //negative so that we know that this symbol is in the section part of the table
 	table.insert(table.begin() + sectionId, entry);
+	
+	numSections++;
 
 	return sectionId++;
 
@@ -145,6 +147,9 @@ TableEntry& MySymbolTable::getSymbol(string name)
 	if (index < 0) {
 		index = -index;
 	}
+	else {
+		index += numSections;
+	}
 
 	return table[index];
 }
@@ -156,10 +161,10 @@ unordered_set<string> MySymbolTable::getUnknownUsedSymbols()
 
 void MySymbolTable::printSymbolTable(ofstream & outputFileTxt, ofstream & outputFileBinary)
 {
-	outputFileTxt << setw(10) << left << hex << "id" << setw(12) << "name" << setw(10) << "section" << "value" << "visibility" << "is external" << "size" << endl;
+	outputFileTxt << setw(10) << left << hex << "id" << setw(15) << "name" << setw(10) << "section" << setw(10) << "value" << setw(12) << "visibility" << setw(10) << "is extern"<< setw(10) << "size" << endl;
 
 	for (auto entry : table) {
-		outputFileTxt << setw(10) << left << hex << entry.id << setw(12) << entry.label << setw(10) << entry.section << entry.value << entry.visibility << entry.isExt << entry.size << endl;
+		outputFileTxt << setw(10) << left << hex << entry.id << setw(15) << entry.label << setw(10) << entry.section << setw(10) << entry.value << setw(12) << entry.visibility << setw(10) << entry.isExt << setw(10) << entry.size << endl;
 	}
 }
 

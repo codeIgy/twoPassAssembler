@@ -51,5 +51,7 @@
   <ItemGroup>
     <None Include="test.s" />
     <None Include="test2.s" />
+    <None Include="interrupts.s" />
+    <None Include="main.s" />
   </ItemGroup>
 </Project>

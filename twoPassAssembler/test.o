@@ -1,3 +1,35 @@
-$.ivt:23
-00 00 05 00 0b 00 00 00 00 00
-00 00 00 00 00 00 00 00 00 00
+id        name        section   value     visibility  is externalsize      
+0                     0         0         l           0         0         
+1                     1         0         l           0         0         
+2         ivt         2         0         l           0         4e        
+3         ivt2        3         0         l           0         29        
+4         a           2         f         l           0         0         
+5         b           2         14        l           0         0         
+6         c           2         19        l           0         0         
+7         e           3         f         l           0         0         
+$.ivt:4e
+00 10 4f 20 30 ff 00 05 00 40
+50 ff 00 0f 00 51 f7 05 00 00
+52 ff 04 05 00 53 ff 04 19 00
+b0 86 12 a0 06 42 60 12 70 57
+61 67 62 00 63 23 64 37 80 60
+81 12 82 12 83 12 84 12 90 12
+91 12 50 f1 01 50 f1 02 50 f7
+03 03 00 50 f7 03 0f 00 
+$relocation data
+offset    type        ordinal   
+d         R_386_16    2
+1c        R_386_16    2
+4c        R_386_16    2
+$.ivt2:29
+a0 0f 00 04 00 a0 0f 00 0f 00
+a0 0f 04 10 00 a0 0f 04 0f 00
+b0 07 03 0d 00 b0 78 01 b0 64
+02 b0 84 03 00 00 b0 44 03 0f
+00 
+$relocation data
+offset    type        ordinal   
+8         R_386_16    3
+12        R_386_16    2
+17        R_386_PC16  2
+27        R_386_16    3
