@@ -39,7 +39,14 @@ void Assembler::writeRelocDataToFiles(ofstream& outputFile, ofstream& outputFile
 }
 
 void Assembler::writeRelocDataBin(ofstream& outputFileBin) {
+	size_t tableSize = relocTable.size();
 
+	outputFileBin.write(reinterpret_cast<char *> (&tableSize), sizeof(tableSize));
+	for (auto r : relocTable) {
+		outputFileBin.write(reinterpret_cast<char*> (&r.offset), sizeof(r.offset));
+		outputFileBin.write(reinterpret_cast<char*> (&r.relType), sizeof(r.relType));
+		outputFileBin.write(reinterpret_cast<char*> (&r.ordinal), sizeof(r.ordinal));
+	}
 }
 
 void Assembler::writeRelocData(ofstream & outputFile)
@@ -57,7 +64,10 @@ void Assembler::writeSectionToFiles(TableEntry & section, ofstream & outputFile,
 }
 
 void Assembler::writeSectionBin(TableEntry & section, ofstream & outputFileBin) {
-
+	size_t labelSize = section.label.size();
+	outputFileBin.write(reinterpret_cast<char*> (&labelSize), sizeof(labelSize));
+	outputFileBin.write( section.label.c_str(), labelSize);
+	outputFileBin.write(reinterpret_cast<char*> (&section.size), sizeof(section.size));
 }
 
 void Assembler::writeSection(TableEntry & section, ofstream & outputFile)
@@ -147,7 +157,10 @@ void Assembler::writeByteToFiles(int value, ofstream & outputFile, ofstream & ou
 }
 
 void Assembler::writeByteBin(int value,  ofstream & outputFileBin) {
+	char mask = 0xFF;
+	char byte = mask & value;
 
+	outputFileBin.write(reinterpret_cast<char*> (&byte), sizeof(byte));
 }
 
 void Assembler::writeByte(int value, ofstream & outputFile)
@@ -172,7 +185,14 @@ void Assembler::write2BytesWordToFiles(int value, ofstream & outputFile, ofstrea
 }
 
 void Assembler::write2BytesWordBin(int value, ofstream & outputFileBin) {
+	int lowerByteMask = 0xFF;
+	int upperByteMask = lowerByteMask << 8;
 
+	char lowerByte = value & lowerByte;
+	char upperByte = (value & upperByteMask) >> 8;
+
+	outputFileBin.write(reinterpret_cast<char*> (&lowerByte), sizeof(lowerByte));
+	outputFileBin.write(reinterpret_cast<char*> (&upperByte), sizeof(upperByte));
 }
 
 void Assembler::write2BytesWord(int value, ofstream & outputFile)
@@ -207,7 +227,14 @@ void Assembler::write2BytesToFiles(int value, ofstream & outputFile, ofstream & 
 }
 
 void Assembler::write2BytesBin(int value, ofstream & outputFileBin) {
+	int lowerByteMask = 0xFF;
+	int upperByteMask = lowerByteMask << 8;
 
+	char lowerByte = value & lowerByte;
+	char upperByte = (value & upperByteMask) >> 8;
+
+	outputFileBin.write(reinterpret_cast<char*> (&upperByte), sizeof(upperByte));
+	outputFileBin.write(reinterpret_cast<char*> (&lowerByte), sizeof(lowerByte));
 }
 
 void Assembler::write2Bytes(int value, ofstream & outputFile)
