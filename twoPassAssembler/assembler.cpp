@@ -24,22 +24,40 @@ void Assembler::assemble(ifstream& inputFile, ofstream& outputFile, ofstream& ou
 
 		table.setOrdinals();
 
-		passSecondTime(inputFile, outputFile);
+		passSecondTime(inputFile, outputFile, outputFileBin);
 	}
 	catch (AssemblerException e) {
 		cout << e.getMsg() << endl;
 	}
 }
 
+void Assembler::writeRelocDataToFiles(ofstream& outputFile, ofstream& outputFileBin) {
+	writeRelocData(outputFile);
+	writeRelocDataBin(outputFileBin);
+
+	relocTable.clear();
+}
+
+void Assembler::writeRelocDataBin(ofstream& outputFileBin) {
+
+}
+
 void Assembler::writeRelocData(ofstream & outputFile)
 {
 	outputFile << endl << "$relocation data" << endl << left << hex << setw(10) << setfill(' ') << "offset" << setw(12) << "type" << setw(10) << "ordinal" << endl;
-	
+
 	for (auto r : relocTable) {
 		outputFile << setw(10) << r.offset << setw(12) << (RelocationEntry::R_386_16 == r.relType ? "R_386_16" : "R_386_PC16") << r.ordinal << endl;
 	}
+}
 
-	relocTable.clear();
+void Assembler::writeSectionToFiles(TableEntry & section, ofstream & outputFile, ofstream & outputFileBin) {
+	writeSection(section, outputFile);
+	writeSectionBin(section, outputFileBin);
+}
+
+void Assembler::writeSectionBin(TableEntry & section, ofstream & outputFileBin) {
+
 }
 
 void Assembler::writeSection(TableEntry & section, ofstream & outputFile)
@@ -48,18 +66,18 @@ void Assembler::writeSection(TableEntry & section, ofstream & outputFile)
 	outputColumnCnt = 0;
 }
 
-void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, RelocationEntry::type relocType)
+void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, ofstream&  outputFileBin, RelocationEntry::type relocType)
 {
 	//dodati dio ako je ista sekcija zbog pc rel i vidjeti sta sa apsolutnim simbolom
 	RelocationEntry entry;
 
 	if (symbol.section == 1) { //absolute symbol
 		if (relocType == RelocationEntry::R_386_16) {
-			write2Bytes(symbol.value, outputFile);
+			write2BytesToFiles(symbol.value, outputFile, outputFileBin);
 		}
 		else {//not covered
 			int offset = symbol.value - 2;
-			write2Bytes(symbol.value, outputFile);
+			write2BytesToFiles(symbol.value, outputFile, outputFileBin);
 		}
 	}
 	else {
@@ -68,30 +86,30 @@ void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, Relocati
 			if (symbol.isExt || symbol.visibility == 'g') { //global symbol
 				entry.offset = locationCounter;
 				entry.ordinal = symbol.id;
-				write2Bytes(0, outputFile);
+				write2BytesToFiles(0, outputFile, outputFileBin);
 			}
 			else { //local symbol
 				entry.offset = locationCounter;
 				entry.ordinal = symbol.section;
-				write2Bytes(symbol.value, outputFile);
+				write2BytesToFiles(symbol.value, outputFile, outputFileBin);
 			}
 			relocTable.push_back(entry);
 		}
 		else {
 			if (sectionIndex == symbol.section) {
-				write2Bytes(symbol.value - locationCounter - 2, outputFile);
+				write2BytesToFiles(symbol.value - locationCounter - 2, outputFile, outputFileBin);
 			}
 			else {
 				entry.relType = RelocationEntry::R_386_PC16;
 				if (symbol.isExt || symbol.visibility == 'g') { //global symbol
 					entry.offset = locationCounter;
 					entry.ordinal = symbol.id;
-					write2Bytes(0 - 2, outputFile);
+					write2BytesToFiles(0 - 2, outputFile, outputFileBin);
 				}
 				else { //local symbol
 					entry.offset = locationCounter;
 					entry.ordinal = symbol.section;
-					write2Bytes(symbol.value - 2, outputFile);
+					write2BytesToFiles(symbol.value - 2, outputFile, outputFileBin);
 				}
 				relocTable.push_back(entry);
 			}
@@ -99,30 +117,38 @@ void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, Relocati
 	}
 }
 
-void Assembler::writeSymbolWord(TableEntry & symbol, ofstream & outputFile, RelocationEntry::type relocType)
+void Assembler::writeSymbolWord(TableEntry & symbol, ofstream & outputFile, ofstream & outputFileBin, RelocationEntry::type relocType)
 {
 	//dodati dio ako je ista sekcija zbog pc rel i vidjeti sta sa apsolutnim simbolom
 	RelocationEntry entry;
 
 	if (symbol.section == 1) { //absolute symbol
-			write2BytesWord(symbol.value, outputFile);
+		write2BytesWordToFiles(symbol.value, outputFile, outputFileBin);
 	}
 	else {
-			entry.relType = RelocationEntry::R_386_16;
-			if (symbol.isExt || symbol.visibility == 'g') { //global symbol
-				entry.offset = locationCounter;
-				entry.ordinal = symbol.id;
-				write2BytesWord(0, outputFile);
-			}
-			else { //local symbol
-				entry.offset = locationCounter;
-				entry.ordinal = symbol.section;
-				write2BytesWord(symbol.value, outputFile);
-			}
-			relocTable.push_back(entry);
+		entry.relType = RelocationEntry::R_386_16;
+		if (symbol.isExt || symbol.visibility == 'g') { //global symbol
+			entry.offset = locationCounter;
+			entry.ordinal = symbol.id;
+			write2BytesWordToFiles(0, outputFile, outputFileBin);
+		}
+		else { //local symbol
+			entry.offset = locationCounter;
+			entry.ordinal = symbol.section;
+			write2BytesWordToFiles(symbol.value, outputFile, outputFileBin);
+		}
+		relocTable.push_back(entry);
 	}
 }
 
+void Assembler::writeByteToFiles(int value, ofstream & outputFile, ofstream & outputFileBin) {
+	writeByte(value, outputFile);
+	writeByteBin(value, outputFileBin);
+}
+
+void Assembler::writeByteBin(int value,  ofstream & outputFileBin) {
+
+}
 
 void Assembler::writeByte(int value, ofstream & outputFile)
 {
@@ -138,6 +164,15 @@ void Assembler::writeByte(int value, ofstream & outputFile)
 	if (++outputColumnCnt < 15) {
 		outputFile << " ";
 	}
+}
+
+void Assembler::write2BytesWordToFiles(int value, ofstream & outputFile, ofstream & outputFileBin) {
+	write2BytesWord(value, outputFile);
+	write2BytesWordBin(value, outputFileBin);
+}
+
+void Assembler::write2BytesWordBin(int value, ofstream & outputFileBin) {
+
 }
 
 void Assembler::write2BytesWord(int value, ofstream & outputFile)
@@ -164,6 +199,15 @@ void Assembler::write2BytesWord(int value, ofstream & outputFile)
 	if (++outputColumnCnt < 15) {
 		outputFile << " ";
 	}
+}
+
+void Assembler::write2BytesToFiles(int value, ofstream & outputFile, ofstream & outputFileBin) {
+	write2Bytes(value, outputFile);
+	write2BytesBin(value, outputFileBin);
+}
+
+void Assembler::write2BytesBin(int value, ofstream & outputFileBin) {
+
 }
 
 void Assembler::write2Bytes(int value, ofstream & outputFile)
@@ -214,25 +258,25 @@ int Assembler::extractRegInfo(string s)
 	return num;
 }
 
-void Assembler::processAndWriteAddress(string s, int reg1, ofstream & outputFile)
+void Assembler::processAndWriteAddress(string s, int reg1, ofstream & outputFile, ofstream & outputFileBin)
 {
 	smatch symbols;
 	int mask = 0x0F;
 	if (regex_search(s, symbols, RegExpr::indirectReg)) {
 		int reg2 = extractRegInfo(symbols[1]);
-		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
-		writeByte(0x02, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | (mask & reg2), outputFile, outputFileBin);
+		writeByteToFiles(0x02, outputFile, outputFileBin);
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::directReg)) {
 		int reg2 = extractRegInfo(symbols[1]);
-		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
-		writeByte(0x01, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | (mask & reg2), outputFile, outputFileBin);
+		writeByteToFiles(0x01, outputFile, outputFileBin);
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::immLiteral)) {
-		writeByte(((mask & reg1) << 4) | 0x0F, outputFile);
-		writeByte(0x00, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | 0x0F, outputFile, outputFileBin);
+		writeByteToFiles(0x00, outputFile, outputFileBin);
 
 		int value;
 		string numStr = symbols[1];
@@ -243,12 +287,12 @@ void Assembler::processAndWriteAddress(string s, int reg1, ofstream & outputFile
 			value = stoi(numStr);
 		}
 
-		write2Bytes(value, outputFile);
+		write2BytesToFiles(value, outputFile, outputFileBin);
 		locationCounter += 4;
 	}
 	else if (regex_search(s, symbols, RegExpr::addressLiteral)) {
-		writeByte(((mask & reg1) << 4) | 0x0F, outputFile);
-		writeByte(0x04, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | 0x0F, outputFile, outputFileBin);
+		writeByteToFiles(0x04, outputFile, outputFileBin);
 
 		int value;
 		string numStr = symbols[1];
@@ -259,13 +303,13 @@ void Assembler::processAndWriteAddress(string s, int reg1, ofstream & outputFile
 			value = stoi(numStr);
 		}
 
-		write2Bytes(value, outputFile);
+		write2BytesToFiles(value, outputFile, outputFileBin);
 		locationCounter += 4;
 	}
 	else if (regex_search(s, symbols, RegExpr::indirectSumLiteral)) {
 		int reg2 = extractRegInfo(symbols[1]);
-		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
-		writeByte(0x03, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | (mask & reg2), outputFile, outputFileBin);
+		writeByteToFiles(0x03, outputFile, outputFileBin);
 
 		int value;
 		string numStr = symbols[2];
@@ -276,68 +320,68 @@ void Assembler::processAndWriteAddress(string s, int reg1, ofstream & outputFile
 			value = stoi(numStr);
 		}
 
-		write2Bytes(value, outputFile);
+		write2BytesToFiles(value, outputFile, outputFileBin);
 		locationCounter += 4;
 	}
 	else if (regex_search(s, symbols, RegExpr::immSymbol)) {
-		writeByte(((mask & reg1) << 4) | 0x0F, outputFile);
-		writeByte(0x00, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | 0x0F, outputFile, outputFileBin);
+		writeByteToFiles(0x00, outputFile, outputFileBin);
 		locationCounter += 2;
 
-		writeSymbol(table.getSymbol(symbols[1]), outputFile);
+		writeSymbol(table.getSymbol(symbols[1]), outputFile, outputFileBin);
 
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::pcRel)) {
 		int reg2 = 0x07;
-		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
-		writeByte(0x03, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | (mask & reg2), outputFile, outputFileBin);
+		writeByteToFiles(0x03, outputFile, outputFileBin);
 		locationCounter += 2;
 
-		writeSymbol(table.getSymbol(symbols[1]), outputFile, RelocationEntry::R_386_PC16);
+		writeSymbol(table.getSymbol(symbols[1]), outputFile, outputFileBin, RelocationEntry::R_386_PC16);
 
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::addressSymbol)) {
-		writeByte(((mask & reg1) << 4) | 0x0F, outputFile);
-		writeByte(0x04, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | 0x0F, outputFile, outputFileBin);
+		writeByteToFiles(0x04, outputFile, outputFileBin);
 		locationCounter += 2;
 
-		writeSymbol(table.getSymbol(symbols[1]), outputFile);
+		writeSymbol(table.getSymbol(symbols[1]), outputFile, outputFileBin);
 
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::indirectSumSymbol)) {
 		int reg2 = extractRegInfo(symbols[1]);
-		writeByte(((mask & reg1) << 4) | (mask & reg2), outputFile);
-		writeByte(0x03, outputFile);
+		writeByteToFiles(((mask & reg1) << 4) | (mask & reg2), outputFile, outputFileBin);
+		writeByteToFiles(0x03, outputFile, outputFileBin);
 		locationCounter += 2;
 
-		writeSymbol(table.getSymbol(symbols[2]), outputFile);
+		writeSymbol(table.getSymbol(symbols[2]), outputFile, outputFileBin);
 
 		locationCounter += 2;
 	}
 }
 
-void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile)
+void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile, ofstream & outputFileBin)
 {
 	smatch symbols;
 	int mask = 0x0F;
 	if (regex_search(s, symbols, RegExpr::indirectRegJmp)) {
 		int reg = extractRegInfo(symbols[1]);
-		writeByte(0xF0 | (mask & reg), outputFile);
-		writeByte(0x02, outputFile);
+		writeByteToFiles(0xF0 | (mask & reg), outputFile, outputFileBin);
+		writeByteToFiles(0x02, outputFile, outputFileBin);
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::directRegJmp)) {
 		int reg = extractRegInfo(symbols[1]);
-		writeByte(0xF0 | (mask & reg), outputFile);
-		writeByte(0x01, outputFile);
+		writeByteToFiles(0xF0 | (mask & reg), outputFile, outputFileBin);
+		writeByteToFiles(0x01, outputFile, outputFileBin);
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::immLiteralJmp)) {
-		writeByte(0xFF, outputFile);
-		writeByte(0x00, outputFile);
+		writeByteToFiles(0xFF, outputFile, outputFileBin);
+		writeByteToFiles(0x00, outputFile, outputFileBin);
 
 		int value;
 		string numStr = symbols[1];
@@ -348,12 +392,12 @@ void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile)
 			value = stoi(numStr);
 		}
 
-		write2Bytes(value, outputFile);
+		write2BytesToFiles(value, outputFile, outputFileBin);
 		locationCounter += 4;
 	}
 	else if (regex_search(s, symbols, RegExpr::addressLiteralJmp)) {
-		writeByte(0xFF, outputFile);
-		writeByte(0x04, outputFile);
+		writeByteToFiles(0xFF, outputFile, outputFileBin);
+		writeByteToFiles(0x04, outputFile, outputFileBin);
 
 		int value;
 		string numStr = symbols[1];
@@ -364,13 +408,13 @@ void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile)
 			value = stoi(numStr);
 		}
 
-		write2Bytes(value, outputFile);
+		write2BytesToFiles(value, outputFile, outputFileBin);
 		locationCounter += 4;
 	}
 	else if (regex_search(s, symbols, RegExpr::indirectSumLiteralJmp)) {
 		int reg = extractRegInfo(symbols[1]);
-		writeByte(0xF0 | (mask & reg), outputFile);
-		writeByte(0x03, outputFile);
+		writeByteToFiles(0xF0 | (mask & reg), outputFile, outputFileBin);
+		writeByteToFiles(0x03, outputFile, outputFileBin);
 
 		int value;
 		string numStr = symbols[2];
@@ -381,41 +425,41 @@ void Assembler::processAndWriteAddressJmp(string s, ofstream & outputFile)
 			value = stoi(numStr);
 		}
 
-		write2Bytes(value, outputFile);
+		write2BytesToFiles(value, outputFile, outputFileBin);
 		locationCounter += 4;
 	}
 	else if (regex_search(s, symbols, RegExpr::immSymbolJmp)) {
-		writeByte(0xFF, outputFile);
-		writeByte(0x00, outputFile);
+		writeByteToFiles(0xFF, outputFile, outputFileBin);
+		writeByteToFiles(0x00, outputFile, outputFileBin);
 		locationCounter += 2;
 
-		writeSymbol(table.getSymbol(symbols[1]), outputFile);
+		writeSymbol(table.getSymbol(symbols[1]), outputFile, outputFileBin);
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::pcRelJmp)) {
 		int reg = 0x07;
-		writeByte(0xF0 | (mask & reg), outputFile);
-		writeByte(0x05, outputFile);
+		writeByteToFiles(0xF0 | (mask & reg), outputFile, outputFileBin);
+		writeByteToFiles(0x05, outputFile, outputFileBin);
 		locationCounter += 2;
 
-		writeSymbol(table.getSymbol(symbols[1]), outputFile, RelocationEntry::R_386_PC16);
+		writeSymbol(table.getSymbol(symbols[1]), outputFile, outputFileBin, RelocationEntry::R_386_PC16);
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::addressSymbolJmp)) {
-		writeByte(0xFF, outputFile);
-		writeByte(0x04, outputFile);
+		writeByteToFiles(0xFF, outputFile, outputFileBin);
+		writeByteToFiles(0x04, outputFile, outputFileBin);
 		locationCounter += 2;
 
-		writeSymbol(table.getSymbol(symbols[1]), outputFile);
+		writeSymbol(table.getSymbol(symbols[1]), outputFile, outputFileBin);
 		locationCounter += 2;
 	}
 	else if (regex_search(s, symbols, RegExpr::indirectSumSymbolJmp)) {
 		int reg = extractRegInfo(symbols[1]);
-		writeByte(0xF0 | (mask & reg), outputFile);
-		writeByte(0x03, outputFile);
+		writeByteToFiles(0xF0 | (mask & reg), outputFile, outputFileBin);
+		writeByteToFiles(0x03, outputFile, outputFileBin);
 		locationCounter += 2;
 
-		writeSymbol(table.getSymbol(symbols[2]), outputFile);
+		writeSymbol(table.getSymbol(symbols[2]), outputFile, outputFileBin);
 		locationCounter += 2;
 	}
 }
@@ -779,7 +823,7 @@ void Assembler::passFirstTime(ifstream& inputFile) {
 
 }
 
-void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile)
+void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile, ofstream& outputFileBin)
 {
 	bool endReached = false;
 	int lineNumber = 0;
@@ -814,28 +858,28 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile)
 
 			if (regex_search(line, symbols, RegExpr::directiveSection)) {
 				if (sectionIndex != 0) {
-					writeRelocData(outputFile);
+					writeRelocDataToFiles(outputFile, outputFileBin);
 				}
 
 				TableEntry& section = table.getSymbol(symbols[1]);
 				sectionIndex = section.id;
 				locationCounter = 0;
 
-				writeSection(section, outputFile);
+				writeSectionToFiles(section, outputFile, outputFileBin);
 			}
 			else if (regex_search(line, symbols, RegExpr::directiveWord)) {
 				string arg = symbols[1];
 
 				if (regex_match(arg, RegExpr::symbol)) {
-					writeSymbolWord(table.getSymbol(arg), outputFile);
+					writeSymbolWord(table.getSymbol(arg), outputFile, outputFileBin);
 				}
 				else if (regex_match(arg, RegExpr::hex)) {
 					int val = stoi(arg, nullptr, 16);
-					write2BytesWord(val, outputFile);
+					write2BytesWordToFiles(val, outputFile, outputFileBin);
 				}
 				else {
 					int val = stoi(arg);
-					write2BytesWord(val, outputFile);
+					write2BytesWordToFiles(val, outputFile, outputFileBin);
 				}
 
 				locationCounter += 2;
@@ -848,7 +892,7 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile)
 						arg = symbols[0];
 
 						if (regex_match(arg, RegExpr::symbol)) {
-							writeSymbol(table.getSymbol(arg), outputFile);
+							writeSymbol(table.getSymbol(arg), outputFile, outputFileBin);
 						}
 
 						locationCounter += 2;
@@ -863,11 +907,11 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile)
 
 						if (regex_match(arg, RegExpr::hex)) {
 							int val = stoi(arg, nullptr, 16);
-							write2BytesWord(val, outputFile);
+							write2BytesWordToFiles(val, outputFile, outputFileBin);
 						}
 						else {
 							int val = stoi(arg);
-							write2BytesWord(val, outputFile);
+							write2BytesWordToFiles(val, outputFile, outputFileBin);
 						}
 
 						locationCounter += 2;
@@ -886,193 +930,193 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile)
 				int num = stoi(value, nullptr, base);
 
 				for (int i = 0; i < num; i++) {
-					writeByte(0, outputFile);
+					writeByteToFiles(0, outputFile, outputFileBin);
 				}
 
 				locationCounter += num;
 			}
 			else if (regex_search(line, RegExpr::directiveEnd)) {
 				endReached = true;
-				writeRelocData(outputFile);
+				writeRelocDataToFiles(outputFile, outputFileBin);
 			}
 			else if (regex_search(line, RegExpr::halt)) {
-				writeByte(0, outputFile);
+				writeByteToFiles(0, outputFile, outputFileBin);
 				locationCounter += 1;
 			}
 			else if (regex_search(line, symbols, RegExpr::interrupt)) {
 				int reg = extractRegInfo(symbols[1]);
-				writeByte(0x10, outputFile);
-				writeByte((reg << 4) | 0x0F, outputFile);
+				writeByteToFiles(0x10, outputFile, outputFileBin);
+				writeByteToFiles((reg << 4) | 0x0F, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, RegExpr::iret)) {
-				writeByte(0x20, outputFile);
+				writeByteToFiles(0x20, outputFile, outputFileBin);
 				locationCounter++;
 			}
 			else if (regex_search(line, RegExpr::callFixed)) {
 				line = regex_replace(line, RegExpr::callFixed, "");
 
-				writeByte(0x30, outputFile);
+				writeByteToFiles(0x30, outputFile, outputFileBin);
 				locationCounter++;
 
-				processAndWriteAddressJmp(line, outputFile);
+				processAndWriteAddressJmp(line, outputFile, outputFileBin);
 			}
 			else if (regex_search(line, RegExpr::ret)) {
-				writeByte(0x40, outputFile);
+				writeByteToFiles(0x40, outputFile, outputFileBin);
 				locationCounter++;
 			}
 			else if (regex_search(line, RegExpr::jmpFixed)) {
 				line = regex_replace(line, RegExpr::jmpFixed, "");
 
-				writeByte(0x50, outputFile);
+				writeByteToFiles(0x50, outputFile, outputFileBin);
 				locationCounter++;
 
-				processAndWriteAddressJmp(line, outputFile);
+				processAndWriteAddressJmp(line, outputFile, outputFileBin);
 			}
 			else if (regex_search(line, RegExpr::jeqFixed)) {
 				line = regex_replace(line, RegExpr::jeqFixed, "");
 
-				writeByte(0x51, outputFile);
+				writeByteToFiles(0x51, outputFile, outputFileBin);
 				locationCounter++;
 
-				processAndWriteAddressJmp(line, outputFile);
+				processAndWriteAddressJmp(line, outputFile, outputFileBin);
 			}
 			else if (regex_search(line, RegExpr::jneFixed)) {
 				line = regex_replace(line, RegExpr::jneFixed, "");
 
-				writeByte(0x52, outputFile);
+				writeByteToFiles(0x52, outputFile, outputFileBin);
 				locationCounter++;
-				processAndWriteAddressJmp(line, outputFile);
+				processAndWriteAddressJmp(line, outputFile, outputFileBin);
 			}
 			else if (regex_search(line, RegExpr::jgtFixed)) {
 				line = regex_replace(line, RegExpr::jgtFixed, "");
 
-				writeByte(0x53, outputFile);
+				writeByteToFiles(0x53, outputFile, outputFileBin);
 				locationCounter++;
 
-				processAndWriteAddressJmp(line, outputFile);
+				processAndWriteAddressJmp(line, outputFile, outputFileBin);
 			}
 			else if (regex_search(line, symbols, RegExpr::push)) {
 				int reg = extractRegInfo(symbols[1]);
-				writeByte(0xB0, outputFile);
-				writeByte((reg << 4) | 0x06, outputFile);
-				writeByte(0x12, outputFile);
+				writeByteToFiles(0xB0, outputFile, outputFileBin);
+				writeByteToFiles((reg << 4) | 0x06, outputFile, outputFileBin);
+				writeByteToFiles(0x12, outputFile, outputFileBin);
 				locationCounter += 3;
 			}
 			else if (regex_search(line, symbols, RegExpr::pop)) {
 				int reg = extractRegInfo(symbols[1]);
-				writeByte(0xA0, outputFile);
-				writeByte((reg << 4) | 0x06, outputFile);
-				writeByte(0x42, outputFile);
+				writeByteToFiles(0xA0, outputFile, outputFileBin);
+				writeByteToFiles((reg << 4) | 0x06, outputFile, outputFileBin);
+				writeByteToFiles(0x42, outputFile, outputFileBin);
 				locationCounter += 3;
 			}
 			else if (regex_search(line, symbols, RegExpr::xchg)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x60, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x60, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::add)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x70, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x70, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::sub)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x71, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x71, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::mul)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x72, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x72, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::div)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x73, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x73, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::cmp)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x74, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x74, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::logicNot)) {
 				int regD = extractRegInfo(symbols[1]);
-				writeByte(0x80, outputFile);
-				writeByte((regD << 4), outputFile);
+				writeByteToFiles(0x80, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4), outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::logicAnd)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x81, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x81, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::logicOr)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x82, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x82, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::logicXor)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x83, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x83, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::test)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x84, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x84, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::shl)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x90, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x90, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::shr)) {
 				int regD = extractRegInfo(symbols[1]);
 				int regS = extractRegInfo(symbols[2]);
-				writeByte(0x91, outputFile);
-				writeByte((regD << 4) | regS, outputFile);
+				writeByteToFiles(0x91, outputFile, outputFileBin);
+				writeByteToFiles((regD << 4) | regS, outputFile, outputFileBin);
 				locationCounter += 2;
 			}
 			else if (regex_search(line, symbols, RegExpr::ldrFixed)) {
 				int reg1 = extractRegInfo(symbols[1]);
 				line = regex_replace(line, RegExpr::ldrFixed, "");
 
-				writeByte(0xA0, outputFile);
+				writeByteToFiles(0xA0, outputFile, outputFileBin);
 				locationCounter++;
 
-				processAndWriteAddress(line, reg1, outputFile);
+				processAndWriteAddress(line, reg1, outputFile, outputFileBin);
 			}
 			else if (regex_search(line, symbols, RegExpr::strFixed)) {
 				int reg1 = extractRegInfo(symbols[1]);
 				line = regex_replace(line, RegExpr::strFixed, "");
 
-				writeByte(0xB0, outputFile);
+				writeByteToFiles(0xB0, outputFile, outputFileBin);
 				locationCounter++;
 
-				processAndWriteAddress(line, reg1, outputFile);
+				processAndWriteAddress(line, reg1, outputFile, outputFileBin);
 			}
 
 		}
