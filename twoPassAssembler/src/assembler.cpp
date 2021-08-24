@@ -85,9 +85,13 @@ void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, ofstream
 		if (relocType == RelocationEntry::R_386_16) {
 			write2BytesToFiles(symbol.value, outputFile, outputFileBin);
 		}
-		else {//not covered
+		else {
 			int offset = symbol.value - 2;
 			write2BytesToFiles(symbol.value, outputFile, outputFileBin);
+			RelocationEntry entry;
+			entry.offset = symbol.value - 2;
+			entry.relType = RelocationEntry::R_386_PC16;
+			entry.ordinal = 1; //ABS
 		}
 	}
 	else {
@@ -858,7 +862,9 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile, ofstre
 
 	inputFile.seekg(0);
 
-	table.printSymbolTable(outputFile, outputFile);
+	table.printSymbolTable(outputFile, outputFileBin);
+
+	outputFileBin.write(reinterpret_cast<char *>(&table.numSections), sizeof(table.numSections));
 
 	locationCounter = 0;
 	sectionIndex = 0;

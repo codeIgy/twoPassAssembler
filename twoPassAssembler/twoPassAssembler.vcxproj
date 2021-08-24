@@ -87,9 +87,11 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>.\inc</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -123,24 +125,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="assembler.cpp" />
-    <ClCompile Include="lex.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="symbolTable.cpp" />
+    <ClInclude Include="inc\assembler.h" />
+    <ClInclude Include="inc\assemblerException.h" />
+    <ClInclude Include="inc\lex.h" />
+    <ClInclude Include="inc\relocationEntry.h" />
+    <ClInclude Include="inc\symbolTable.h" />
+    <ClInclude Include="inc\TableEntry.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="assembler.h" />
-    <ClInclude Include="assemblerException.h" />
-    <ClInclude Include="lex.h" />
-    <ClInclude Include="relocationEntry.h" />
-    <ClInclude Include="symbolTable.h" />
-    <ClInclude Include="TableEntry.h" />
+    <ClCompile Include="src\assembler.cpp" />
+    <ClCompile Include="src\lex.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\symbolTable.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="interrupts.s" />
-    <None Include="main.s" />
-    <None Include="test.s" />
-    <None Include="test2.s" />
+    <None Include="tests\interrupts.s" />
+    <None Include="tests\main.s" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

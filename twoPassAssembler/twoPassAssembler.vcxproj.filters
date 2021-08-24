@@ -15,43 +15,41 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="assembler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="lex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="symbolTable.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="assembler.h">
+    <ClInclude Include="inc\assembler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="assemblerException.h">
+    <ClInclude Include="inc\assemblerException.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lex.h">
+    <ClInclude Include="inc\lex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="symbolTable.h">
+    <ClInclude Include="inc\relocationEntry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TableEntry.h">
+    <ClInclude Include="inc\symbolTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="relocationEntry.h">
+    <ClInclude Include="inc\TableEntry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="test.s" />
-    <None Include="test2.s" />
-    <None Include="interrupts.s" />
-    <None Include="main.s" />
+    <ClCompile Include="src\assembler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\symbolTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="tests\interrupts.s" />
+    <None Include="tests\main.s" />
   </ItemGroup>
 </Project>

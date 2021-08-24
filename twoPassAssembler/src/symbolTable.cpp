@@ -1,4 +1,4 @@
-#include "SymbolTable.h"
+#include "symbolTable.h"
 #include <iomanip>
 void MySymbolTable::insertNonSection(string label, int section, int value,
 	char visibility, bool isExt, bool isAbs) {
@@ -166,6 +166,21 @@ void MySymbolTable::printSymbolTable(ofstream & outputFileTxt, ofstream & output
 	for (auto entry : table) {
 		outputFileTxt << setw(10) << left << hex << entry.id << setw(15) << entry.label << setw(10) << entry.section << setw(10) << entry.value << setw(12) << entry.visibility << setw(10) << entry.isExt << setw(10) << entry.size << endl;
 	}
+
+	size_t tableSize = table.size();
+
+	outputFileBinary.write(reinterpret_cast<char*> (&tableSize), sizeof(tableSize));
+	for (auto entry : table) {
+		outputFileBinary.write(reinterpret_cast<char*> (&entry.id), sizeof(entry.id));
+		size_t labelSize = entry.label.size();
+		outputFileBinary.write(reinterpret_cast<char*> (&labelSize), sizeof(labelSize));
+		outputFileBinary.write(entry.label.c_str(), sizeof(entry.label.size()));
+		outputFileBinary.write(reinterpret_cast<char*> (&entry.section), sizeof(entry.section));
+		outputFileBinary.write(reinterpret_cast<char*> (&entry.value), sizeof(entry.value));
+		outputFileBinary.write(reinterpret_cast<char*> (&entry.visibility), sizeof(entry.visibility));
+		outputFileBinary.write(reinterpret_cast<char*> (&entry.isExt), sizeof(entry.isExt));
+		outputFileBinary.write(reinterpret_cast<char*> (&entry.size), sizeof(entry.size));
+	}
 }
 
 bool MySymbolTable::canBeDeclaredGlobal(TableEntry& entry)
@@ -176,8 +191,8 @@ bool MySymbolTable::canBeDeclaredGlobal(TableEntry& entry)
 MySymbolTable::MySymbolTable()
 {
 	//insert undefined and absolute section
-	table.push_back(TableEntry(sectionId++, "", 0, 0, 'l'));//undefined
-	table.push_back(TableEntry(sectionId++, "", 1, 0, 'l'));//absolute
+	table.push_back(TableEntry(sectionId++, "UND", 0, 0, 'l'));//undefined
+	table.push_back(TableEntry(sectionId++, "ABS", 1, 0, 'l'));//absolute
 }
 
 MySymbolTable::~MySymbolTable()

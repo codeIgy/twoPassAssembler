@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 		return 0;
 	}
 
-	outputFileBin.open(outputFileNameBin, ios::out);
+	outputFileBin.open(outputFileNameBin, ios::out | ios::binary);
 	if (!outputFileBin) {
 		cout << "Error: Unable to open binary output file" << endl;
 		outputFileBin.close();

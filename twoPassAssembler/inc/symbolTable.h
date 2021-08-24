@@ -15,6 +15,8 @@ using namespace std;
 class MySymbolTable
 {
 public:
+	int numSections = 2;
+
 	MySymbolTable();
 	~MySymbolTable();
 
@@ -54,7 +56,7 @@ private:
 	unordered_set<string> usedSymbols;//this should be empty after the first pass, if not then we have some unknown symbols
 	vector<TableEntry> table;
 	int sectionId = 0;
-	int numSections = 2;
+
 
 	bool canBeDeclaredGlobal(TableEntry& entry);
 
