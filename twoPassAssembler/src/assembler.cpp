@@ -39,7 +39,7 @@ void Assembler::writeRelocDataToFiles(ofstream& outputFile, ofstream& outputFile
 }
 
 void Assembler::writeRelocDataBin(ofstream& outputFileBin) {
-	size_t tableSize = relocTable.size();
+	unsigned tableSize = relocTable.size();
 
 	outputFileBin.write(reinterpret_cast<char *> (&tableSize), sizeof(tableSize));
 	for (auto r : relocTable) {
@@ -53,8 +53,27 @@ void Assembler::writeRelocData(ofstream & outputFile)
 {
 	outputFile << endl << "$relocation data" << endl << left << hex << setw(10) << setfill(' ') << "offset" << setw(12) << "type" << setw(10) << "ordinal" << endl;
 
+	
+
 	for (auto r : relocTable) {
-		outputFile << setw(10) << r.offset << setw(12) << (RelocationEntry::R_386_16 == r.relType ? "R_386_16" : "R_386_PC16") << r.ordinal << endl;
+		string relocType = "";
+
+		switch (r.relType) {
+		case RelocationEntry::R_386_16:
+			relocType = "R_386_16";
+			break;
+		case RelocationEntry::R_386_16D:
+			relocType = "R_386_16D";
+			break;
+		case RelocationEntry::R_386_PC16:
+			relocType = "R_386_PC16";
+			break;
+		case RelocationEntry::R_386_PC16D:
+			relocType = "R_386_PC16D";
+			break;
+		default: break;
+		}
+		outputFile << setw(10) << r.offset << setw(12) << relocType << r.ordinal << endl;
 	}
 }
 
@@ -64,7 +83,8 @@ void Assembler::writeSectionToFiles(TableEntry & section, ofstream & outputFile,
 }
 
 void Assembler::writeSectionBin(TableEntry & section, ofstream & outputFileBin) {
-	size_t labelSize = section.label.size();
+	unsigned labelSize = section.label.size();
+	outputFileBin.write(reinterpret_cast<char*> (&section.id), sizeof(section.id));
 	outputFileBin.write(reinterpret_cast<char*> (&labelSize), sizeof(labelSize));
 	outputFileBin.write( section.label.c_str(), labelSize);
 	outputFileBin.write(reinterpret_cast<char*> (&section.size), sizeof(section.size));
@@ -78,7 +98,6 @@ void Assembler::writeSection(TableEntry & section, ofstream & outputFile)
 
 void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, ofstream&  outputFileBin, RelocationEntry::type relocType)
 {
-	//dodati dio ako je ista sekcija zbog pc rel i vidjeti sta sa apsolutnim simbolom
 	RelocationEntry entry;
 
 	if (symbol.section == 1) { //absolute symbol
@@ -133,14 +152,13 @@ void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, ofstream
 
 void Assembler::writeSymbolWord(TableEntry & symbol, ofstream & outputFile, ofstream & outputFileBin, RelocationEntry::type relocType)
 {
-	//dodati dio ako je ista sekcija zbog pc rel i vidjeti sta sa apsolutnim simbolom
 	RelocationEntry entry;
 
 	if (symbol.section == 1) { //absolute symbol
 		write2BytesWordToFiles(symbol.value, outputFile, outputFileBin);
 	}
 	else {
-		entry.relType = RelocationEntry::R_386_16;
+		entry.relType = RelocationEntry::R_386_16D;
 		if (symbol.isExt || symbol.visibility == 'g') { //global symbol
 			entry.offset = locationCounter;
 			entry.ordinal = symbol.id;
