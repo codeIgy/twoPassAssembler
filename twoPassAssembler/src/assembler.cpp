@@ -210,7 +210,7 @@ void Assembler::write2BytesWordBin(int value, ofstream & outputFileBin) {
 	int lowerByteMask = 0xFF;
 	int upperByteMask = lowerByteMask << 8;
 
-	char lowerByte = value & lowerByte;
+	char lowerByte = value & lowerByteMask;
 	char upperByte = (value & upperByteMask) >> 8;
 
 	outputFileBin.write(reinterpret_cast<char*> (&lowerByte), sizeof(lowerByte));
@@ -252,7 +252,7 @@ void Assembler::write2BytesBin(int value, ofstream & outputFileBin) {
 	int lowerByteMask = 0xFF;
 	int upperByteMask = lowerByteMask << 8;
 
-	char lowerByte = value & lowerByte;
+	char lowerByte = value & lowerByteMask;
 	char upperByte = (value & upperByteMask) >> 8;
 
 	outputFileBin.write(reinterpret_cast<char*> (&upperByte), sizeof(upperByte));
