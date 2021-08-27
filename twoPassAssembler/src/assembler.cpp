@@ -105,12 +105,13 @@ void Assembler::writeSymbol(TableEntry & symbol, ofstream & outputFile, ofstream
 			write2BytesToFiles(symbol.value, outputFile, outputFileBin);
 		}
 		else {
-			int offset = symbol.value - 2;
-			write2BytesToFiles(symbol.value, outputFile, outputFileBin);
+			int value = symbol.value - 2;
+			write2BytesToFiles(value, outputFile, outputFileBin);
 			RelocationEntry entry;
-			entry.offset = symbol.value - 2;
+			entry.offset = locationCounter;
 			entry.relType = RelocationEntry::R_386_PC16;
 			entry.ordinal = 1; //ABS
+			relocTable.push_back(entry);
 		}
 	}
 	else {
@@ -943,7 +944,7 @@ void Assembler::passSecondTime(ifstream& inputFile, ofstream& outputFile, ofstre
 						arg = symbols[0];
 
 						if (regex_match(arg, RegExpr::symbol)) {
-							writeSymbol(table.getSymbol(arg), outputFile, outputFileBin);
+							writeSymbolWord(table.getSymbol(arg), outputFile, outputFileBin);
 						}
 
 						locationCounter += 2;
